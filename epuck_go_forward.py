@@ -2,7 +2,7 @@ from controller import Robot, DistanceSensor, Motor, Camera
 
 TIME_STEP = 64
 MAX_SPEED = 6.28
-THRESHOLD = 90.0
+THRESHOLD = 120.0
 
 # ------------------ create robot ------------------
 robot = Robot()
@@ -83,39 +83,42 @@ while robot.step(TIME_STEP) != -1:
     psValues = [sensor.getValue() for sensor in ps]
     
     # openness (lower = more open)
-    left_space  = psValues[5]   # left = ps5
-    right_space = psValues[2]   # right = ps2
-
-    # front uses ps7 and ps0
     front_obstacle = psValues[7] > THRESHOLD or psValues[0] > THRESHOLD
-    right_obstacle = right_space > THRESHOLD
-    left_obstacle = left_space > THRESHOLD
-    
-    # go straight """
-        leftMotor.setVelocity(0.5 * MAX_SPEED)
-        rightMotor.setVelocity(0.5 * MAX_SPEED)
-        """
+    right_obstacle = psValues[1] > THRESHOLD or psValues[2] > THRESHOLD
+    left_obstacle  = psValues[5] > THRESHOLD or psValues[6] > THRESHOLD
         
-    if not right_obstacle:
+    
+      
+    if not front_obstacle:
+        # go straight
+        for _ in range(10):
+            leftMotor.setVelocity(0.5 * MAX_SPEED)
+            rightMotor.setVelocity(0.5 * MAX_SPEED)
+            robot.step(TIME_STEP)
+        print("going straight")  
+        
+    elif not right_obstacle:
         turn_right_90()
         # go straight
-        leftMotor.setVelocity(0.5 * MAX_SPEED)
-        rightMotor.setVelocity(0.5 * MAX_SPEED)
-
-    elif not front_obstacle:
-        # go straight
-        leftMotor.setVelocity(0.5 * MAX_SPEED)
-        rightMotor.setVelocity(0.5 * MAX_SPEED)
+        for _ in range(10):
+            leftMotor.setVelocity(0.5 * MAX_SPEED)
+            rightMotor.setVelocity(0.5 * MAX_SPEED)
+            robot.step(TIME_STEP)
+        print("turn right")
         
     elif not left_obstacle:
         turn_left_90()
         # go straight
-        leftMotor.setVelocity(0.5 * MAX_SPEED)
-        rightMotor.setVelocity(0.5 * MAX_SPEED)
+        for _ in range(10):
+            leftMotor.setVelocity(0.5 * MAX_SPEED)
+            rightMotor.setVelocity(0.5 * MAX_SPEED)
+            robot.step(TIME_STEP)
+        print("turning left")
         
     else:
         # dead end
         turn_180()
+        print("turn around")
 
     """
     else :
