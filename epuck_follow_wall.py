@@ -2,7 +2,7 @@ from controller import Robot, DistanceSensor, Motor, Camera
 
 TIME_STEP = 64
 MAX_SPEED = 6.28
-THRESHOLD = 120.0
+THRESHOLD = 300.0
 
 # ------------------ create robot ------------------
 robot = Robot()
@@ -35,15 +35,19 @@ def turn_left_90():
     stop()
     leftMotor.setVelocity(-0.5 * MAX_SPEED)
     rightMotor.setVelocity(0.5 * MAX_SPEED)
-    for _ in range(11):  # tune if needed
+    for _ in range(10):  # tune if needed
         robot.step(TIME_STEP)
+    print("Turning Left")
+    stop()
 
 def turn_right_90():
     stop()
     leftMotor.setVelocity(0.5 * MAX_SPEED)
     rightMotor.setVelocity(-0.5 * MAX_SPEED)
-    for _ in range(11):
+    for _ in range(10):
         robot.step(TIME_STEP)
+    print("Turning Right")
+    stop()
 
 def turn_180():
     stop()
@@ -51,6 +55,8 @@ def turn_180():
     rightMotor.setVelocity(-0.5 * MAX_SPEED)
     for _ in range(22):
         robot.step(TIME_STEP)
+    print("Turning Around")
+    stop()
 
 def sees_green():
     image = camera.getImage()
@@ -83,60 +89,33 @@ while robot.step(TIME_STEP) != -1:
     psValues = [sensor.getValue() for sensor in ps]
     
     # openness (lower = more open)
+    left_space  = psValues[5]   # left = ps5
+    right_space = psValues[2]   # right = ps2
+
+    # front uses ps7 and ps0
     front_obstacle = psValues[7] > THRESHOLD or psValues[0] > THRESHOLD
-    right_obstacle = psValues[1] > THRESHOLD or psValues[2] > THRESHOLD
-    left_obstacle  = psValues[5] > THRESHOLD or psValues[6] > THRESHOLD
-        
+    right_obstacle = right_space > THRESHOLD
     
-      
-    if not front_obstacle:
-        # go straight
-        for _ in range(10):
-            leftMotor.setVelocity(0.5 * MAX_SPEED)
-            rightMotor.setVelocity(0.5 * MAX_SPEED)
-            robot.step(TIME_STEP)
-        print("going straight")  
-        
-    elif not right_obstacle:
-        turn_right_90()
-        # go straight
-        for _ in range(10):
-            leftMotor.setVelocity(0.5 * MAX_SPEED)
-            rightMotor.setVelocity(0.5 * MAX_SPEED)
-            robot.step(TIME_STEP)
-        print("turn right")
-        
-    elif not left_obstacle:
+    if front_obstacle:
+        # Corner ahead or dead end. Turning left forces the obstacle to our right.
+        # If dead end, turn left twice over two loops (180 degrees).
         turn_left_90()
-        # go straight
-        for _ in range(10):
-            leftMotor.setVelocity(0.5 * MAX_SPEED)
-            rightMotor.setVelocity(0.5 * MAX_SPEED)
+
+    elif not right_obstacle:
+        for _ in range(5):  
             robot.step(TIME_STEP)
-        print("turning left")
-        
-    else:
-        # dead end
-        turn_180()
-        print("turn around")
-
-    """
-    else :
-        # obstacle ahead → check for green wall FIRST
-        if sees_green():
-            print("Green wall detected — stopping")
-            stop()
-            break  # stop permanently
-
-        # otherwise do avoidance
-        if left_space < right_space and left_space < THRESHOLD:
-            turn_left_90()
-
-        elif right_space < left_space and right_space < THRESHOLD:
-            turn_right_90()
-
-        else:
-            # dead end
-            turn_180()
             
-    """
+        # The wall on the right ended; follow it around the corner
+        turn_right_90()
+        
+        # Drive forward far enough to enter new corridor
+        leftMotor.setVelocity(0.5 * MAX_SPEED)
+        rightMotor.setVelocity(0.5 * MAX_SPEED)
+        
+        for _ in range(20):  
+            robot.step(TIME_STEP)
+
+    else:
+        # Right wall exists, front is clear -> keep tracking the wall
+        leftMotor.setVelocity(0.5 * MAX_SPEED)
+        rightMotor.setVelocity(0.5 * MAX_SPEED)
