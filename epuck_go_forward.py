@@ -405,13 +405,13 @@ def direction_between(a, b):
             return d
     return None
 
-def follow_path(path, speed_factor=0.5, record_wall=True):
+def follow_path(path, speed_factor=0.5, turn_speed_factor=None, record_wall=True):
     for i in range(1, len(path)):
         d = direction_between(path[i - 1], path[i])
         if d is None:
             print(f"  [PATH] bad step {path[i-1]}->{path[i]}, aborting")
             return False
-        turn_to(d)  # always turn at TURN_SPEED for accuracy; only forward varies
+        turn_to(d, turn_speed_factor)
         if not move_forward(speed_factor, record_wall=record_wall):
             print(f"  [PATH] move failed at step {i}/{len(path)-1}")
             return False
@@ -632,7 +632,7 @@ if speed_run_mode and goal_cell:
             break
         spd = ph3_speeds[attempt]
         print(f"[Phase3] Attempt {attempt+1} speed={spd}: {len(path_goal)} cells  {path_goal}")
-        if follow_path(path_goal, speed_factor=spd, record_wall=False):
+        if follow_path(path_goal, speed_factor=spd, turn_speed_factor=0.3, record_wall=False):
             turn_to(goal_dir)
             leftMotor.setVelocity(MAX_SPEED)
             rightMotor.setVelocity(MAX_SPEED)
